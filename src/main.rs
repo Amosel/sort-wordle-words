@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 use sub_array::SubArray;
 
-fn reorder<const N: usize>(words: [&str; N]) -> [&str; N] {
-    fn score(word: &str, map: &HashMap<char, usize>) -> usize {
-        let mut score: usize = 0;
-        for c in word.chars() {
-            score += *map.get(&c).unwrap_or(&0)
-        }
-        return score;
+fn score(word: &str, map: &HashMap<char, usize>) -> usize {
+    let mut score: usize = 0;
+    for c in word.chars() {
+        score += *map.get(&c).unwrap_or(&0)
     }
+    return score;
+}
+
+fn create_popularity_score<const N: usize>(words: [&str; N]) -> HashMap<char, usize> {
     let mut map: HashMap<char, usize> = HashMap::new();
     // iterate througut each word
     words.iter().for_each(|item| {
@@ -16,9 +17,13 @@ fn reorder<const N: usize>(words: [&str; N]) -> [&str; N] {
             *map.entry(c).or_insert(0) += 1;
         })
     });
+    map
+}
 
+pub fn reorder<const N: usize>(words: [&str; N]) -> [&str; N] {
+    let map = create_popularity_score(words);
     let mut result: [&str; N] = words;
-    result.sort_unstable_by(|a, b| score(a, &map).cmp(&score(b, &map)));
+    result.sort_unstable_by(|a, b| score(b, &map).cmp(&score(a, &map)));
     result
 }
 
@@ -102,6 +107,31 @@ pub static WORDS: [&str; 775] = [
     "world", "worry", "worse", "worst", "worth", "wound", "wrath", "wreck", "wring", "write",
     "wrong", "yearn", "yield", "young", "youth",
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_popularity_score() {
+        let words: [&str; 4] = ["aaaaa", "bbbbb", "ccccc", "ddddd"];
+        let expected: HashMap<char, usize> = [('a', 5), ('b', 5), ('c', 5), ('d', 5)].iter().cloned().collect();
+
+        let actual = create_popularity_score(words);
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_reorder() {
+        let words: [&str; 4] = ["aaaaa", "abbbb", "bcccc", "ddefg"];
+        let expected: [&str; 4] = ["aaaaa", "abbbb", "bcccc", "ddefg"];
+
+        let actual = reorder(words);
+
+        assert_eq!(actual, expected);
+    }
+}
 
 fn main() {
     let res = reorder(WORDS);
